@@ -3,6 +3,7 @@ import json
 import random
 import time
 import sys
+import credenciais
 
 class AtualizaAmbiente:
 
@@ -17,15 +18,15 @@ class AtualizaAmbiente:
             else:
                 self.id = 0
 
-        print("Versao escolhida: "+str(escolha))
+        print("Versão: "+str(escolha))
         if self.id :
             self.consumo()
 
-    def autorization(self):
+    def autorizacao(self):
         url = "https://totvsrestore.azurewebsites.net/api/auth"
         payload = json.dumps({
-        "email": "seuemail@totvs.com.br",
-        "password": "SenhaApiTotvs"
+        "email": credenciais.username,
+        "password": credenciais.password
         })
         self.headers = {
         'Content-Type': 'application/json',
@@ -35,7 +36,7 @@ class AtualizaAmbiente:
 
         token = (json.loads(response.text))
         if "access_token" in token :
-            print("Autorizarion: Liberada")
+            print("Autorização: Liberada")
             self.token = token["access_token"]
             self.auth = True
             self.headers = {
@@ -43,27 +44,26 @@ class AtualizaAmbiente:
             'Content-Type': 'application/json'
             }
         else:
-            print("Autorizarion: Negada")
+            print("Autorização: Negada")
             self.token = False
             self.auth = False
 
     
-    def environment(self):
-        self.autorization()
+    def ambiente(self):
+        self.autorizacao()
         url="https://totvsrestore.azurewebsites.net/api/user-environments"
         response = requests.request("GET", url, headers=self.headers)
         print(response.text)
 
 
     def consumo(self):
-        self.autorization()
+        self.autorizacao()
         if self.auth:
             url = "https://totvsrestore.azurewebsites.net/api/user-environments/force-update/"+self.id+"/all"
             response = requests.request("POST", url, headers=self.headers)
             request = (json.loads(response.text))
             if "requestUpdateId" in request :
                 self.request = request["requestUpdateId"]
-                print("Atualiznado ambiente. Aguarde! ")
                 self.consulta_retorno()
                 time.sleep(5)
                 print("Liberado!")
@@ -75,21 +75,23 @@ class AtualizaAmbiente:
         response = requests.request("GET", url, headers=self.headers)
         request = (json.loads(response.text))
         status = True
+        total = (len(request))
         while status:
             status = False
+            contador = 0
             for var in request :
                 if not var["isSuccess"]:
                     status = True
+                    contador += 1
+
+            print("Restando "+str(contador) + " de: "+ str(total))
             response = requests.request("GET", url, headers=self.headers)
             request = (json.loads(response.text))
-
-
-
-
+        
 if __name__ == "__main__":
     if sys.argv[1:]:
         AtualizaAmbiente(str(sys.argv[1]))
     else:
         print("Nenhuma versão foi passada.")
-        print("Utilize assim: python atualizador.py 32")
+        print("Utilize assim: python atualizador_novo.py 32")
         time.sleep(10)
