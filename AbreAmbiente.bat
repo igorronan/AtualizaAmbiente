@@ -54,7 +54,7 @@ goto fechar
 
 :fechar
 cls
-call python3 "%folder_origin%\atualizador.py" %v%
+call python3 "%folder_origin%\atualizador_novo.py" %v%
 echo Abrindo host ...
 start RM.Host.exe
 timeout /t 10 > nul
