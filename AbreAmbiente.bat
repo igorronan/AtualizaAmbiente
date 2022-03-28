@@ -4,12 +4,14 @@ TASKKILL /F /IM rm.host.exe /T
 TASKKILL /F /IM rmSaude.exe /T
 TASKKILL /F /IM rm.exe /T
 TASKKILL /F /IM msedge.exe /T
+TASKKILL /F /IM RuntimeBroker.exe /T
 net stop RM.Host.Service
 cls
 
 :Iniciando Variaveis
 SET VAR=0
 set folder_origin=%cd%
+set log=%folder_origin%\log.log
 
 echo . ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 echo . + Escoha a versao do RM a ser aberta
@@ -56,15 +58,21 @@ goto AtualizaAmbiente
 
 
 :AtualizaAmbiente
+echo %date% - %time% - Versao escolhida %v%>> %log%
 cls
 :Iniciando Atualização Sistema
+echo %date% - %time% - Iniciando atualização do ambiente>> %log%
 call python3 "%folder_origin%\atualizador_novo.py" %v%
 
+echo %date% - %time% - Apagando Arquivo Broker>> %log%
+del %pastasistema%\_Broker.dat
 
+echo %date% - %time% - Abrindo RM.Host.exe>> %log%
 echo Abrindo host ...
 start %pastasistema%\RM.Host.exe
 
 :Aguardando Inicio Sistema
+echo %date% - %time% - Aguardando RM.Host.exe iniciar>> %log%
 :loop
 
 FOR /F "tokens=*" %%g IN ('cmd /c "python3 %folder_origin%\request.py http://localhost:8051/wsDataServer/MEX?wsdl"') do (SET VAR=%%g)
@@ -76,9 +84,11 @@ goto iniciarRM
 goto loop
 
 :iniciarRM
+echo %date% - %time% - Abrindo RM.exe>> %log%
 start %pastasistema%\RM.exe
 
 :Abrindo URL Sistema
+echo %date% - %time% - Abrindo Url Pep RM>> %log%
 "C:\Program Files\Google\Chrome\Application\chrome.exe" --app %url%
 
 
