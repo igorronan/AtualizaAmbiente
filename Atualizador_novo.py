@@ -3,40 +3,73 @@ import json
 import os
 import time
 import sys
+from datetime import datetime
+import configparser
 
 try:
     import credenciais
 except ImportError:
     raise ImportError('Erro ao importar credenciais')
-    
-
 
 class AtualizaAmbiente:
 
     def __init__(self, escolha):
-        self.versoes = {"32":"1195","33":"491","34":"1705", "35":"2154"}
+        config = configparser.ConfigParser()
+        folder = os.path.dirname(os.path.abspath(__file__))
+        config.read(folder+'\\versoes.ini')
+        self.success = 0
+        self.error = 0
+        self.chamadas = 60
+        self.start = datetime.now()
+        self.id = False
         if not escolha:
-            self.id = json.loads(self.versoes["35"])
-            
+            self.log("Versão não identificada",2)
+            return
         else:
-            if escolha in self.versoes:
-                self.id = self.versoes[escolha]
+            if escolha:
+                if config.has_section(escolha):
+                    self.id = config[escolha]['id']
+                else:
+                    self.log('Versao nao encontrada ',2)
+                    return
             else:
-                (self.ambiente())
+                self.id = config['versoes']['atual']
+                return
 
-        print("Versão: "+self.retorna_versao(self.id))
+        
         if self.id :
+            self.log("Versão: "+self.retorna_versao(self.id), 1)
             self.consumo()
+            
+        self.resumo()
 
+    def log(self, msg, tipo):
+        if tipo == 1:
+            t = '[SUCCESS]'
+            self.success +=1
+        else:
+            t = '[ERROR]'
+            self.error +=1
+        print(F" - {datetime.now()} {t}: {msg}")
+    
+    def resumo(self):
+        self.end = datetime.now()
+        total = self.end-self.start
+        print(f" ")
+        print(f" - FIM DE PROCESSAMENTO")
+        print(f" - SUCCESS: \t\t {self.success}")
+        print(f" - ERROR: \t\t {self.error}")
+        print(f" - DURATION: \t\t {total}")
+    
     def autorizacao(self):
         self.headers = False
         self.auth = False
         self.token = False
         if not hasattr(credenciais,'username'):
-            print("Credencial username nao encontrado")
+            self.log("Credencial username nao encontrado",2)
             sys.exit()
         if not hasattr(credenciais,'password'):
-            print("Credencial password nao encontrado")
+            self.log("Credencial password nao encontrado",2)
             sys.exit()
 
         url = "https://totvsrestore.azurewebsites.net/api/auth"
@@ -58,17 +91,20 @@ class AtualizaAmbiente:
             'Authorization': 'Bearer '+self.token,
             'Content-Type': 'application/json'
             }
+            #self.log("Autorizacao: "+self.token,1)
         else:
-            print("Autorização: Negada")
+            self.log("Autorização: Negada",2)
 
-    def ambiente(self):
+    def ambiente(self,inicio):
         self.autorizacao()
         url="https://totvsrestore.azurewebsites.net/api/user-environments"
         response = requests.request("GET", url, headers=self.headers)
         ambientes = json.loads(response.text)
         self.cls()
         for ambiente in ambientes:
-            print(str(ambiente['id'])+ ": " +ambiente['name'])
+            self.log(str(ambiente['id'])+ ": " +ambiente['name'],1)
+            if inicio == str(ambiente['name']):
+                self.id = ambiente['id']
         
         loop = True
         while loop:
@@ -81,15 +117,19 @@ class AtualizaAmbiente:
 
     def consumo(self):
         self.autorizacao()
-        if self.auth:
+        
+        if self.auth == True:
+            
             url = "https://totvsrestore.azurewebsites.net/api/user-environments/force-update/"+self.id+"/all"
             response = requests.request("POST", url, headers=self.headers)
             request = (json.loads(response.text))
             if "requestUpdateId" in request :
                 self.request = request["requestUpdateId"]
                 self.consulta_retorno()
-                time.sleep(5)
-                print("Liberado!")
+                time.sleep(3)
+                self.log("Liberado!",1)
+            else:
+                self.log(request['errorMessage'],2)
                 
     def consulta_retorno(self):
         url=" https://totvsrestore.azurewebsites.net/api/user-environments/status/"+self.request
@@ -97,17 +137,27 @@ class AtualizaAmbiente:
         request = (json.loads(response.text))
         status = True
         total = (len(request))
+        chamadas = self.chamadas
+        
         while status:
+            installerName = ''
             status = False
             contador = 0
+            
             for var in request :
                 if not var["isSuccess"]:
                     status = True
                     contador += 1
+                if var["isPending"]:
+                    installerName = (var['installerName'])
 
-            print("Restando "+str(contador) + " de: "+ str(total))
+            self.log("Restando "+str(contador) + " de: "+ str(total)+" regressiva: "+str(chamadas),1)
             response = requests.request("GET", url, headers=self.headers)
             request = (json.loads(response.text))
+            chamadas = chamadas -1
+            if chamadas == 0:
+                return False
+            
         
     def retorna_versao(self, id):
         self.autorizacao()
@@ -116,6 +166,7 @@ class AtualizaAmbiente:
         ambientes = json.loads(response.text)
         for ambiente in ambientes:
             if id == str(ambiente['id']):
+                
                 return ambiente["name"]
 
     def cls(self):
@@ -125,8 +176,7 @@ if __name__ == "__main__":
     if sys.argv[1:]:
         AtualizaAmbiente(str(sys.argv[1]))
     else:
-
-        AtualizaAmbiente(1)
-        print("Nenhuma versão foi passada.")
-        print("Utilize assim: python atualizador_novo.py 32")
+        AtualizaAmbiente("atual")
+        AtualizaAmbiente.log("Nenhuma versão foi passada.",2)
+        AtualizaAmbiente.log("Utilize assim: python atualizador_novo.py 32",2)
         time.sleep(10)

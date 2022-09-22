@@ -1,18 +1,59 @@
-Configurações;
-Utilizar o restore já configurado pela totvs;
+# Configurações
 
-Pegar os ID´s dos ambientes criados no Totvs Restore e modificar a linha destinada a eles;
+## Totvs Restore
+* Utilizar o restore disponibilizado pela totvs como serviço;
+    link para documentação:  https://tdn.totvs.com/pages/releaseview.action?pageId=607585039
+
+## Ambientes
+* Após montar os ambientes, selecionar seus respectivos ID´s e realizar a configuração no arquivo *versoes.ini*
+Exemplo de configuração
     
-    Atualizador_novo.py
-    self.versoes = {"32":"1195","33":"491","34":"1705", "35":"2154"}
+```sh
+        [atual]
+        id=3962
+        sqlhost=SERVIDORSQL
+        sqlbanco=BANCOSQL
+        oraclehost=SERVIDORORAACLE
+        oraclebanco=BANCOORACLE
+```
 
-Deve-se criar aplicativos no IIS de acordo com cada versão desejada.
-    Ex: http://localhost/32
-
-Pra o ambinte atual deve criar o aplicativo na seguinte configuração
-    Ex: http://localhost/Atual
-
-Criar um arquivo separado para as credenciais 
+Editar as configurações do arquivo credenciais.py com as suas credenciais criada no portal do Totvs Restore 
+```sh
     credentials.py
         username = "SeuEmailTotvs"
         password = "SenhaSenhaApi"
+```
+
+## Utilização
+* Para utilizar o CLI basta inica-lo (sempre como administrador);
+* No primeiro passo deve-se digitar a versao cadastrada no arquivo *versoes.ini*
+    ```sh
+    . ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    . + Escoha a versao do RM a ser aberta
+    . + Ex 2209
+    . + para versao atual apenas aperte Enter
+    . +
+    . ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    Versao:
+    ```
+    
+* Apos deve-se escolher qual banco de dados utilizar
+    ```sh
+    . ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    . + Escoha a versao do RM a ser aberta
+    . + 1 SQL
+    . + 2 ORACLE
+    . +
+    . ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    Escolha uma das opcoes acima [1,2]?
+    ```
+* Por ultimo deve-se escolher Atualizar o ambiente ou apenas unicar o sistema na versão escolhida;
+    ```sh
+    .. ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    . + Escoha a versao do RM a ser aberta
+    . + 1 Atualizar Ambiente
+    . + 2 Apenas subir o Host
+    . +
+    . ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    Escolha uma das opcoes acima [1,2]?
+    ```
