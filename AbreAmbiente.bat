@@ -12,9 +12,11 @@ cls
 title VERIFICANDO EXISTENCIA DO PYTHON
 
 
-python3 -V | find /v "Python" >NUL 2>NUL && (goto :PYTHON_DOES_NOT_EXIST)
-python3 -V | find "Python"    >NUL 2>NUL && (goto :PYTHON_DOES_EXIST)
+where python
+IF %ERRORLEVEL% EQU 0 (goto :PYTHON_DOES_EXIST)
+IF %ERRORLEVEL% EQU 1 (goto :PYTHON_DOES_NOT_EXIST)
 goto :fim
+
 
 
 :PYTHON_DOES_NOT_EXIST

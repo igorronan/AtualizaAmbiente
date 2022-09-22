@@ -1,5 +1,9 @@
 # Configurações
 
+## Instalação Python
+* Necessario ter instalado o python para rodar o atualizador.
+    https://www.python.org/downloads/windows/
+
 ## Totvs Restore
 * Utilizar o restore disponibilizado pela totvs como serviço;
     link para documentação:  https://tdn.totvs.com/pages/releaseview.action?pageId=607585039
